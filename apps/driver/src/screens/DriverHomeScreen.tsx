@@ -7,6 +7,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { useAuth } from '../../../passenger/src/context/AuthContext';
 import { COLORS, RIDE_STATUS } from '../../../../shared/constants';
 import { formatPrice } from '../../../../shared/utils';
+import { retryMatchAfterDecline } from '../../../../shared/utils/matching';
 
 const { width, height } = Dimensions.get('window');
 
@@ -100,6 +101,9 @@ const DriverHomeScreen = ({ navigation }: any) => {
         declinedDrivers: firestore.FieldValue.arrayUnion(user.uid),
         updatedAt: firestore.FieldValue.serverTimestamp(),
       });
+      // Client-side re-matching: find next nearest driver
+      retryMatchAfterDecline(rideId)
+        .catch(err => console.error('[Matching] Re-match error:', err));
     } catch (error) {
       console.error("Failed to decline ride:", error);
     }

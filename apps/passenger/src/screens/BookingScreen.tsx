@@ -50,17 +50,25 @@ const BookingScreen = ({ route, navigation }: any) => {
         <Text style={styles.statusLabel}>
           {rideData?.status === RIDE_STATUS.SEARCHING ? 'RECHERCHE EN COURS...' : 
            rideData?.status === RIDE_STATUS.ACCEPTED ? 'LE CHAUFFEUR ARRIVE' :
-           rideData?.status === RIDE_STATUS.IN_PROGRESS ? 'TRAJET EN COURS' : 'COURSE TERMINÉE'}
+           rideData?.status === RIDE_STATUS.IN_PROGRESS ? 'TRAJET EN COURS' :
+           rideData?.status === 'no_drivers_available' ? 'AUCUN CHAUFFEUR DISPONIBLE' :
+           'COURSE TERMINÉE'}
         </Text>
         
         <View style={styles.mainInfo}>
-          <Icon name={rideData?.status === RIDE_STATUS.SEARCHING ? 'search' : 'car-sport'} size={60} color={COLORS.PRIMARY} />
+          <Icon name={
+            rideData?.status === RIDE_STATUS.SEARCHING ? 'search' : 
+            rideData?.status === 'no_drivers_available' ? 'sad-outline' :
+            'car-sport'
+          } size={60} color={rideData?.status === 'no_drivers_available' ? '#999' : COLORS.PRIMARY} />
           <Text style={styles.price}>{formatPrice(rideData?.price)}</Text>
         </View>
 
-        {rideData?.status === RIDE_STATUS.SEARCHING && (
+        {(rideData?.status === RIDE_STATUS.SEARCHING || rideData?.status === 'no_drivers_available') && (
           <TouchableOpacity style={styles.cancelBtn} onPress={() => navigation.goBack()}>
-            <Text style={styles.cancelText}>ANNULER LA COMMANDE</Text>
+            <Text style={styles.cancelText}>
+              {rideData?.status === 'no_drivers_available' ? 'RETOUR' : 'ANNULER LA COMMANDE'}
+            </Text>
           </TouchableOpacity>
         )}
 

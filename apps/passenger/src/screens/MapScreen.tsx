@@ -8,6 +8,7 @@ import { useLocation } from '../context/LocationContext';
 import { COLORS, RIDE_STATUS } from '../../../../shared/constants';
 import RideSelector from '../components/RideSelector';
 import { calculateDistance, getFreeRoute } from '../../../../shared/utils';
+import { findAndAssignNearestDriver } from '../../../../shared/utils/matching';
 
 const { width, height } = Dimensions.get('window');
 
@@ -96,6 +97,10 @@ const MapScreen = ({ navigation }: any) => {
         vehicleType: selectedRideId,
       });
       navigation.navigate('Booking', { rideId: rideRef.id });
+
+      // Client-side matching: find nearest driver in background
+      findAndAssignNearestDriver(rideRef.id, pickup.latitude, pickup.longitude)
+        .catch(err => console.error('[Matching] Error:', err));
     } catch (e) { Alert.alert('Erreur', 'Commande impossible'); }
   };
 
