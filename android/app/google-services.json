@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "409112538969",
+    "project_id": "yango-ecfa9",
+    "storage_bucket": "yango-ecfa9.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:409112538969:android:d18d8460568188c8f6a648",
+        "android_client_info": {
+          "package_name": "com.yango.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBcayG_axOqGioxLtUvStlYbiqbtwMi0wo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -10,13 +10,15 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
-import firestore from '@react-native-firebase/firestore';
-import { COLORS, USER_ROLES } from '../../../../shared/constants';
+import { useAuth } from '../context/AuthContext';
+import { COLORS } from '../../../../shared/constants';
 
 const OTPScreen = ({ route, navigation }: any) => {
   const { confirmation, phone } = route.params;
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
+
+  const { verifySMSCode } = useAuth();
 
   const handleVerify = async () => {
     if (code.length !== 6) {
@@ -26,27 +28,9 @@ const OTPScreen = ({ route, navigation }: any) => {
 
     setLoading(true);
     try {
-      const result = await confirmation.confirm(code);
-      const user = result.user;
-
-      // Vérifier si l'utilisateur existe déjà
-      const userDoc = await firestore().collection('users').doc(user.uid).get();
-      
-      if (!userDoc.exists) {
-        // Créer l'utilisateur s'il est nouveau
-        await firestore().collection('users').doc(user.uid).set({
-          uid: user.uid,
-          phone: phone,
-          role: USER_ROLES.PASSENGER,
-          createdAt: firestore.FieldValue.serverTimestamp(),
-          name: '', // Sera complété plus tard
-        });
-      }
-      
-      // Le AuthContext détectera le changement d'état et naviguera vers Home
+      await verifySMSCode(confirmation, code, phone);
     } catch (error: any) {
       console.error(error);
-      Alert.alert('Erreur', 'Code invalide. Veuillez réessayer.');
     } finally {
       setLoading(false);
     }

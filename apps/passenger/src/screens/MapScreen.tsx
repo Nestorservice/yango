@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Dimensions, Text, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native';
+import { View, StyleSheet, Dimensions, Text, TouchableOpacity, ActivityIndicator, TextInput, Alert } from 'react-native';
 import MapView, { Marker, Polyline, UrlTile } from 'react-native-maps';
 import firestore from '@react-native-firebase/firestore';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -48,7 +48,7 @@ const MapScreen = ({ navigation }: any) => {
     try {
       const url = `https://nominatim.openstreetmap.org/search?format=json&q=${query}&countrycodes=cm&limit=5`;
       const response = await fetch(url, { headers: { 'User-Agent': 'CityGoApp' } });
-      const data = await response.json();
+      const data = await response.json() as any[];
       setSearchResults(data);
     } catch (e) { console.error(e); } finally { setIsSearching(false); }
   };

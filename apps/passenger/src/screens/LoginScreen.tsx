@@ -13,16 +13,22 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { COLORS } from '../../../../shared/constants';
 
-const LoginScreen = () => {
+const LoginScreen = ({ navigation }: any) => {
   const [phone, setPhone] = useState('');
-  const { loginOrRegister, loading } = useAuth();
+  const { sendSMSCode, loading } = useAuth();
 
   const handleLogin = async () => {
     if (phone.length < 4) {
       Alert.alert('Erreur', 'Veuillez entrer un numéro valide');
       return;
     }
-    await loginOrRegister(phone);
+    try {
+      const formattedPhone = phone.startsWith('+') ? phone : `+237${phone}`;
+      const confirmation = await sendSMSCode(phone);
+      navigation.navigate('OTP', { confirmation, phone: formattedPhone });
+    } catch (e) {
+      // Error is alerted by context
+    }
   };
 
   return (

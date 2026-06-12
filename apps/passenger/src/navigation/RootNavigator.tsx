@@ -7,6 +7,10 @@ import { COLORS, USER_ROLES } from '../../../../shared/constants';
 import Icon from 'react-native-vector-icons/Ionicons';
 
 import LoginScreen from '../screens/LoginScreen';
+import OTPScreen from '../screens/OTPScreen';
+import RoleSelectionScreen from '../screens/RoleSelectionScreen';
+import OnboardingScreen from '../screens/OnboardingScreen';
+import DriverOnboardingScreen from '../screens/DriverOnboardingScreen';
 import MapScreen from '../screens/MapScreen';
 import BookingScreen from '../screens/BookingScreen';
 import ChatScreen from '../screens/ChatScreen';
@@ -17,6 +21,8 @@ import RideSummaryScreen from '../screens/RideSummaryScreen';
 import DriverHomeScreen from '../../../driver/src/screens/DriverHomeScreen';
 import DriverHistoryScreen from '../../../driver/src/screens/DriverHistoryScreen';
 import DriverWalletScreen from '../../../driver/src/screens/DriverWalletScreen';
+import PendingValidationScreen from '../../../driver/src/screens/PendingValidationScreen';
+import DriverRideActiveScreen from '../../../driver/src/screens/DriverRideActiveScreen';
 import DashboardPage from '../../../admin/src/pages/DashboardPage';
 
 import { View, ActivityIndicator } from 'react-native';
@@ -62,19 +68,30 @@ const DriverTabs = () => (
 );
 
 const RootNavigator = () => {
-  const { user, userData, loading } = useAuth();
+  const { user, userData, driverData, loading } = useAuth();
   if (loading) return <View style={{ flex: 1, backgroundColor: '#FFF', justifyContent: 'center' }}><ActivityIndicator size="large" color={COLORS.PRIMARY}/></View>;
 
   return (
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {!user ? (
-          <Stack.Screen name="Login" component={LoginScreen} />
+          <>
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="OTP" component={OTPScreen} />
+          </>
         ) : (
           <>
-            {userData?.role === USER_ROLES.DRIVER ? (
+            {!userData?.role ? (
+              <>
+                <Stack.Screen name="RoleSelection" component={RoleSelectionScreen} />
+                <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+                <Stack.Screen name="DriverOnboarding" component={DriverOnboardingScreen} />
+              </>
+            ) : userData.role === USER_ROLES.DRIVER && !driverData?.isValidated ? (
+              <Stack.Screen name="PendingValidation" component={PendingValidationScreen} />
+            ) : userData.role === USER_ROLES.DRIVER ? (
               <Stack.Screen name="DriverMain" component={DriverTabs} />
-            ) : userData?.role === USER_ROLES.ADMIN ? (
+            ) : userData.role === USER_ROLES.ADMIN ? (
               <Stack.Screen name="AdminHome" component={DashboardPage} />
             ) : (
               <Stack.Screen name="PassengerMain" component={PassengerTabs} />
@@ -82,6 +99,7 @@ const RootNavigator = () => {
             <Stack.Screen name="Booking" component={BookingScreen} />
             <Stack.Screen name="Chat" component={ChatScreen} />
             <Stack.Screen name="RideSummary" component={RideSummaryScreen} />
+            <Stack.Screen name="DriverRideActive" component={DriverRideActiveScreen} />
           </>
         )}
       </Stack.Navigator>

@@ -31,7 +31,7 @@ let auth: any = null;
 let storage: any = null;
 let functions: any = null;
 
-const isWeb = typeof window !== 'undefined';
+const isWeb = typeof globalThis !== 'undefined' && 'window' in globalThis;
 
 if (isWeb) {
   // On ne tente l'initialisation QUE si la clé API est présente

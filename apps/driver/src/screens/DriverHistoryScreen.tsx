@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../../passenger/src/context/AuthContext';
 import { COLORS } from '../../../../shared/constants';
 import { formatPrice } from '../../../../shared/utils';
 

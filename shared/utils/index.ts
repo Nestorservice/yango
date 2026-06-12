@@ -21,7 +21,7 @@ export const getFreeRoute = async (start: any, end: any) => {
   try {
     const url = `https://router.project-osrm.org/route/v1/driving/${start.longitude},${start.latitude};${end.longitude},${end.latitude}?overview=full&geometries=geojson`;
     const response = await fetch(url);
-    const data = await response.json();
+    const data = await response.json() as any;
     
     if (data.routes && data.routes.length > 0) {
       // Transformer le GeoJSON en format compatible react-native-maps

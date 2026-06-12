@@ -4,9 +4,12 @@ import firestore from '@react-native-firebase/firestore';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { COLORS, RIDE_STATUS } from '../../../../shared/constants';
 import { formatPrice } from '../../../../shared/utils';
+import { useAuth } from '../context/AuthContext';
+import { triggerSOS } from '../../../../shared/utils/emergency';
 
 const BookingScreen = ({ route, navigation }: any) => {
   const { rideId } = route.params;
+  const { user } = useAuth();
   const [rideData, setRideData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [showRating, setShowRating] = useState(false);
@@ -60,6 +63,42 @@ const BookingScreen = ({ route, navigation }: any) => {
             <Text style={styles.cancelText}>ANNULER LA COMMANDE</Text>
           </TouchableOpacity>
         )}
+
+        {rideData?.status !== RIDE_STATUS.SEARCHING && (
+          <View style={styles.driverInfoContainer}>
+            <View style={styles.divider} />
+            <Text style={styles.driverSectionTitle}>VOTRE CHAUFFEUR</Text>
+            
+            <View style={styles.driverDetailsRow}>
+              <Icon name="person-circle" size={50} color={COLORS.PRIMARY} />
+              <View style={{ marginLeft: 15, flex: 1 }}>
+                <Text style={styles.driverName}>{rideData?.driverName || 'Partenaire CityGo'}</Text>
+                <Text style={styles.vehicleText}>
+                  {rideData?.driverModel} • {rideData?.driverColor}
+                </Text>
+                <Text style={styles.plateText}>{rideData?.driverPlate}</Text>
+              </View>
+            </View>
+
+            <View style={styles.actionRow}>
+              <TouchableOpacity 
+                style={styles.chatBtn} 
+                onPress={() => navigation.navigate('Chat', { rideId, otherPartyName: 'Chauffeur' })}
+              >
+                <Icon name="chatbubble-ellipses" size={20} color="#000" />
+                <Text style={styles.actionBtnText}>CHAT</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.sosBtn} 
+                onPress={() => triggerSOS(user.uid, 'passenger', rideId)}
+              >
+                <Icon name="warning" size={20} color="#fff" />
+                <Text style={[styles.actionBtnText, { color: '#fff' }]}>SOS</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
       </View>
 
       <Modal visible={showRating} transparent animationType="fade">
@@ -101,7 +140,18 @@ const styles = StyleSheet.create({
   ratingSub: { fontSize: 14, color: '#999', marginTop: 10, marginBottom: 30 },
   starsRow: { flexDirection: 'row', justifyContent: 'space-between', width: '100%', marginBottom: 40 },
   submitBtn: { backgroundColor: '#000', width: '100%', padding: 20, borderRadius: 16, alignItems: 'center' },
-  submitText: { color: '#FFF', fontWeight: '900', letterSpacing: 1 }
+  submitText: { color: '#FFF', fontWeight: '900', letterSpacing: 1 },
+  driverInfoContainer: { width: '100%', alignItems: 'center', marginTop: 10 },
+  divider: { width: '100%', height: 1, backgroundColor: '#EEE', marginVertical: 20 },
+  driverSectionTitle: { fontSize: 10, fontWeight: '900', color: '#AAA', letterSpacing: 2, marginBottom: 15 },
+  driverDetailsRow: { flexDirection: 'row', alignItems: 'center', width: '100%', paddingHorizontal: 10 },
+  driverName: { fontSize: 18, fontWeight: '900', color: '#000' },
+  vehicleText: { fontSize: 13, color: '#666', marginTop: 3, fontWeight: '600' },
+  plateText: { fontSize: 11, fontWeight: '900', color: COLORS.PRIMARY, marginTop: 3, letterSpacing: 1 },
+  actionRow: { flexDirection: 'row', width: '100%', justifyContent: 'space-between', marginTop: 25 },
+  chatBtn: { flex: 0.47, height: 50, borderRadius: 12, backgroundColor: '#F0F0F0', flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
+  sosBtn: { flex: 0.47, height: 50, borderRadius: 12, backgroundColor: COLORS.DANGER, flexDirection: 'row', justifyContent: 'center', alignItems: 'center' },
+  actionBtnText: { marginLeft: 8, fontWeight: 'bold', fontSize: 13, color: '#000' }
 });
 
 export default BookingScreen;

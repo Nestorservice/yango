@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity } from 'react-native';
 import firestore from '@react-native-firebase/firestore';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../../passenger/src/context/AuthContext';
 import { COLORS } from '../../../../shared/constants';
 import { formatPrice } from '../../../../shared/utils';
 
