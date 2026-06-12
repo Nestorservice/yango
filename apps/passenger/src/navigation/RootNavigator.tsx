@@ -14,10 +14,10 @@ import HistoryScreen from '../screens/HistoryScreen';
 import WalletScreen from '../screens/WalletScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import RideSummaryScreen from '../screens/RideSummaryScreen';
-import DriverHomeScreen from '../../driver/src/screens/DriverHomeScreen';
-import DriverHistoryScreen from '../../driver/src/screens/DriverHistoryScreen';
-import DriverWalletScreen from '../../driver/src/screens/DriverWalletScreen';
-import DashboardPage from '../../admin/src/pages/DashboardPage';
+import DriverHomeScreen from '../../../driver/src/screens/DriverHomeScreen';
+import DriverHistoryScreen from '../../../driver/src/screens/DriverHistoryScreen';
+import DriverWalletScreen from '../../../driver/src/screens/DriverWalletScreen';
+import DashboardPage from '../../../admin/src/pages/DashboardPage';
 
 import { View, ActivityIndicator } from 'react-native';
 
