@@ -1,4 +1,7 @@
 {
   "name": "yango",
-  "displayName": "yango"
+  "displayName": "yango",
+  "android": {
+    "packageName": "com.yango"
+  }
 }
