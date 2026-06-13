@@ -23,7 +23,7 @@ import DriverHistoryScreen from '../../../driver/src/screens/DriverHistoryScreen
 import DriverWalletScreen from '../../../driver/src/screens/DriverWalletScreen';
 import PendingValidationScreen from '../../../driver/src/screens/PendingValidationScreen';
 import DriverRideActiveScreen from '../../../driver/src/screens/DriverRideActiveScreen';
-import DashboardPage from '../../../admin/src/pages/DashboardPage';
+import AdminDashboardScreen from '../screens/AdminDashboardScreen';
 
 import { View, ActivityIndicator } from 'react-native';
 
@@ -92,7 +92,7 @@ const RootNavigator = () => {
             ) : userData.role === USER_ROLES.DRIVER ? (
               <Stack.Screen name="DriverMain" component={DriverTabs} />
             ) : userData.role === USER_ROLES.ADMIN ? (
-              <Stack.Screen name="AdminHome" component={DashboardPage} />
+              <Stack.Screen name="AdminHome" component={AdminDashboardScreen} />
             ) : (
               <Stack.Screen name="PassengerMain" component={PassengerTabs} />
             )}
