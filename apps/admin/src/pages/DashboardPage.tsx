@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../../../shared/config/firebase';
 import { collection, onSnapshot, query, setDoc, doc, serverTimestamp, limit, orderBy, updateDoc, getDoc, where } from 'firebase/firestore';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, CircleMarker } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { COLORS } from '../../../../shared/constants';
@@ -26,7 +26,7 @@ const DashboardPage = () => {
     if (!db) return undefined;
 
     // Listeners Live
-    const unsubscribeRides = onSnapshot(query(collection(db, 'rides'), limit(10)), (s) => {
+    const unsubscribeRides = onSnapshot(query(collection(db, 'rides'), limit(100)), (s) => {
       const docs = s.docs.map(d => ({ id: d.id, ...d.data() }));
       setRecentRides(docs);
       const completed = docs.filter((d: any) => d.status === 'completed');
@@ -118,9 +118,19 @@ const DashboardPage = () => {
               <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
               {activeDrivers.filter(d => d.isOnline && d.position).map(d => (
                 <Marker key={d.id} position={[d.position.latitude, d.position.longitude]}>
-                   <Popup>{d.name} - {d.vehicleModel}</Popup>
+                   <Popup>🚖 {d.name} - {d.vehicleModel}</Popup>
                 </Marker>
               ))}
+              {recentRides.filter(r => r.status !== 'completed' && r.pickup).map(r => {
+                const lat = r.pickup.latitude || r.pickup._lat;
+                const lng = r.pickup.longitude || r.pickup._long;
+                if (!lat || !lng) return null;
+                return (
+                  <CircleMarker key={r.id} center={[lat, lng]} radius={8} color="#FF5722" fillColor="#FF5722" fillOpacity={1}>
+                    <Popup>👤 Passager: {r.passengerPhone} ({r.status})</Popup>
+                  </CircleMarker>
+                );
+              })}
               {emergencyAlerts.map(a => {
                 if (a.location && a.location.latitude) {
                   return (
