@@ -85,6 +85,13 @@ android {
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
         versionName "1.0"
+
+        externalNativeBuild {
+            cmake {
+                cppFlags "-I${project.rootDir}/../node_modules/react-native/ReactCommon",
+                         "-I${project.rootDir}/../node_modules/react-native/ReactAndroid/src/main/jni"
+            }
+        }
     }
     signingConfigs {
         debug {
@@ -97,6 +104,8 @@ android {
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
+            // Force exclusion of prefab headers if necessary, but usually buildFromSource handles it.
+            // If it still fails, we ensure the compiler sees our node_modules path first.
         }
         release {
             // Caution! In production, you need to generate your own keystore file.

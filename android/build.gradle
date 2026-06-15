@@ -20,4 +20,16 @@ buildscript {
     }
 }
 
+/**
+ * SOLUTION: Force all C++ modules to see our patched headers in node_modules
+ * This fixes the std::format error on VPS environments with incomplete C++20 support.
+ */
+allprojects {
+    tasks.withType(com.android.build.gradle.tasks.ExternalNativeBuildTask).configureEach {
+        it.doFirst {
+            it.arguments.add("-DCMAKE_CXX_FLAGS=-I${rootDir}/../node_modules/react-native/ReactCommon -I${rootDir}/../node_modules/react-native/ReactAndroid/src/main/jni")
+        }
+    }
+}
+
 apply plugin: "com.facebook.react.rootproject"
