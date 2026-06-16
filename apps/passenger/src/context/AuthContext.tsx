@@ -92,12 +92,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Send SMS verification code
   const sendSMSCode = async (phone: string) => {
     setLoading(true);
-    // Standardize phone format
-    const formattedPhone = phone.startsWith('+') ? phone : `+237${phone}`;
+    
+    // Nettoyage du numéro : suppression des espaces et tirets
+    let cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
+    
+    // Gestion du zéro initial (souvent présent dans les saisies utilisateur)
+    if (cleanPhone.startsWith('0')) {
+      cleanPhone = cleanPhone.substring(1);
+    }
+    
+    // Standardisation au format international (+237 pour le Cameroun par défaut)
+    const formattedPhone = cleanPhone.startsWith('+') ? cleanPhone : `+237${cleanPhone}`;
+
+    console.log("Tentative d'envoi SMS à :", formattedPhone);
 
     // Mock bypass for testing numbers (starting with +237600)
     if (formattedPhone.startsWith('+237600')) {
       setLoading(false);
+      console.log("Utilisation du mode mock pour le numéro de test");
       return { mock: true, phone: formattedPhone };
     }
 
@@ -107,8 +119,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return confirmation;
     } catch (error: any) {
       setLoading(false);
-      console.error("SMS sending failed:", error);
-      Alert.alert("Erreur", "Impossible d'envoyer le code SMS. Veuillez réessayer.");
+      console.error("SMS sending failed details:", {
+        code: error.code,
+        message: error.message,
+        phone: formattedPhone
+      });
+      
+      let errorMessage = "Impossible d'envoyer le code SMS. Veuillez vérifier votre connexion ou le numéro saisi.";
+      
+      if (error.code === 'auth/invalid-phone-number') {
+        errorMessage = "Le numéro de téléphone n'est pas valide.";
+      } else if (error.code === 'auth/too-many-requests') {
+        errorMessage = "Trop de tentatives. Veuillez réessayer plus tard.";
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage = "Erreur réseau. Vérifiez votre connexion internet.";
+      }
+      
+      Alert.alert("Erreur d'authentification", errorMessage);
       throw error;
     }
   };
