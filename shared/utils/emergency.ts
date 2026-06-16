@@ -6,7 +6,33 @@ import Geolocation from '@react-native-community/geolocation';
 // NOTE: Pour utiliser les vraies photos, installez 'react-native-image-picker'
 // et décommentez la partie correspondante.
 
+const requestEmergencyPermissions = async () => {
+  if (Platform.OS === 'android') {
+    try {
+      const granted = await PermissionsAndroid.requestMultiple([
+        PermissionsAndroid.PERMISSIONS.CAMERA,
+        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+        PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE,
+        PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+      ]);
+      return (
+        granted['android.permission.CAMERA'] === PermissionsAndroid.RESULTS.GRANTED &&
+        granted['android.permission.ACCESS_FINE_LOCATION'] === PermissionsAndroid.RESULTS.GRANTED
+      );
+    } catch (err) {
+      console.warn(err);
+      return false;
+    }
+  }
+  return true;
+};
+
 export const triggerSOS = async (userId: string, userRole: string, rideId?: string) => {
+  const hasPermissions = await requestEmergencyPermissions();
+  if (!hasPermissions) {
+    Alert.alert("Permissions manquantes", "L'application a besoin de la caméra et de la position pour le SOS.");
+  }
+
   const confirmSOS = () => {
     return new Promise((resolve) => {
       Alert.alert(
