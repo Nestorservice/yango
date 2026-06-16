@@ -179,42 +179,76 @@ const DriverHomeScreen = ({ navigation }: any) => {
         </View>
       </View>
 
-      {/* Ride Request Fullscreen Modal */}
+      {/* Ride Request Immersive Radar Modal */}
       <Modal visible={!!requestedRide} transparent animationType="slide">
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.timerCircle}>
-              <Text style={styles.timerText}>{countdown}</Text>
+          <View style={styles.radarContainer}>
+            {/* Radar Animation Effect (Decorative) */}
+            <View style={styles.radarWave} />
+            <View style={[styles.radarWave, { transform: [{ scale: 1.5 }], opacity: 0.1 }]}>
+               <View style={styles.radarDot} />
             </View>
             
-            <Text style={styles.modalTitle}>NOUVELLE COURSE !</Text>
-            <Text style={styles.modalPrice}>{formatPrice(requestedRide?.price || 0)}</Text>
-            
-            <View style={styles.divider} />
-            
-            <View style={styles.locationRow}>
-              <Icon name="pin" size={24} color={COLORS.PRIMARY} />
-              <View style={{ marginLeft: 15 }}>
-                <Text style={styles.locationLabel}>DÉPART (PICKUP)</Text>
-                <Text style={styles.locationText}>Douala, Cameroun</Text>
+            <View style={styles.modalContent}>
+              <View style={styles.timerContainer}>
+                <View style={[styles.timerCircle, { borderColor: countdown < 10 ? '#F44336' : COLORS.PRIMARY }]}>
+                  <Text style={[styles.timerText, { color: countdown < 10 ? '#F44336' : '#000' }]}>{countdown}</Text>
+                </View>
+                <View style={styles.pulseBadge}>
+                  <Text style={styles.pulseText}>EN DIRECT</Text>
+                </View>
               </View>
-            </View>
-
-            <View style={[styles.locationRow, { marginTop: 20 }]}>
-              <Icon name="flag" size={24} color="#000" />
-              <View style={{ marginLeft: 15 }}>
-                <Text style={styles.locationLabel}>ARRIVÉE (DESTINATION)</Text>
-                <Text style={styles.locationText}>Douala, Cameroun</Text>
+              
+              <Text style={styles.modalSubTitle}>VOUS AVEZ UNE OFFRE DE COURSE</Text>
+              <Text style={styles.modalPrice}>{formatPrice(requestedRide?.price || 0)}</Text>
+              
+              <View style={styles.statsRow}>
+                <View style={styles.statItem}>
+                  <Icon name="navigate-circle" size={20} color={COLORS.PRIMARY} />
+                  <Text style={styles.statValue}>{requestedRide?.distance?.toFixed(1) || '2.4'} km</Text>
+                  <Text style={styles.statLabel}>Distance</Text>
+                </View>
+                <View style={styles.dividerVertical} />
+                <View style={styles.statItem}>
+                  <Icon name="time" size={20} color={COLORS.PRIMARY} />
+                  <Text style={styles.statValue}>~ {Math.round(requestedRide?.distance * 3) || '8'} min</Text>
+                  <Text style={styles.statLabel}>Arrivée</Text>
+                </View>
+                <View style={styles.dividerVertical} />
+                <View style={styles.statItem}>
+                  <Icon name="star" size={20} color={COLORS.PRIMARY} />
+                  <Text style={styles.statValue}>4.9</Text>
+                  <Text style={styles.statLabel}>Note</Text>
+                </View>
               </View>
-            </View>
 
-            <View style={styles.actions}>
-              <TouchableOpacity style={styles.declineBtn} onPress={handleDecline}>
-                <Text style={styles.declineText}>REFUSER</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.acceptBtn} onPress={handleAccept}>
-                <Text style={styles.acceptText}>ACCEPTER</Text>
-              </TouchableOpacity>
+              <View style={styles.locationBox}>
+                <View style={styles.locationPoint}>
+                  <View style={styles.dotStart} />
+                  <View style={styles.lineConnector} />
+                  <View style={styles.dotEnd} />
+                </View>
+                <View style={styles.locationLabels}>
+                  <View>
+                    <Text style={styles.locLabelMini}>DÉPART</Text>
+                    <Text style={styles.locMainText} numberOfLines={1}>{requestedRide?.pickupAddress || 'Position Actuelle'}</Text>
+                  </View>
+                  <View style={{ marginTop: 25 }}>
+                    <Text style={styles.locLabelMini}>DESTINATION</Text>
+                    <Text style={styles.locMainText} numberOfLines={1}>{requestedRide?.destinationAddress || 'Centre Ville'}</Text>
+                  </View>
+                </View>
+              </View>
+
+              <View style={styles.actions}>
+                <TouchableOpacity style={styles.declineBtn} onPress={handleDecline}>
+                  <Text style={styles.declineText}>IGNORER</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.acceptBtn} onPress={handleAccept}>
+                  <Text style={styles.acceptText}>ACCEPTER L'OFFRE</Text>
+                  <Icon name="chevron-forward" size={20} color="#FFF" style={{ marginLeft: 10 }} />
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </View>
@@ -238,22 +272,42 @@ const styles = StyleSheet.create({
   supportBtn: { backgroundColor: '#000', padding: 20, borderRadius: 15, marginTop: 40, width: '100%', alignItems: 'center' },
   supportText: { color: '#FFF', fontWeight: 'bold', fontSize: 13 },
   
-  // Modal request styles
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: '#FFF', borderTopLeftRadius: 36, borderTopRightRadius: 36, padding: 35, alignItems: 'center' },
-  timerCircle: { width: 70, height: 70, borderRadius: 35, borderWidth: 4, borderColor: COLORS.PRIMARY, justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
-  timerText: { fontSize: 24, fontWeight: '900', color: '#000' },
-  modalTitle: { fontSize: 13, fontWeight: '900', color: '#AAA', letterSpacing: 2, marginBottom: 10 },
-  modalPrice: { fontSize: 36, fontWeight: '900', color: '#000', marginBottom: 25 },
-  divider: { width: '100%', height: 1, backgroundColor: '#EEE', marginBottom: 25 },
-  locationRow: { flexDirection: 'row', width: '100%', alignItems: 'center' },
-  locationLabel: { fontSize: 10, fontWeight: '900', color: '#AAA', letterSpacing: 1 },
-  locationText: { fontSize: 16, fontWeight: '700', color: '#333', marginTop: 2 },
-  actions: { flexDirection: 'row', width: '100%', justifyContent: 'space-between', marginTop: 35 },
-  declineBtn: { flex: 0.47, height: 60, borderRadius: 16, backgroundColor: '#FFF', borderWidth: 1.5, borderColor: '#EEE', justifyContent: 'center', alignItems: 'center' },
-  declineText: { fontSize: 15, fontWeight: '900', color: COLORS.GRAY, letterSpacing: 1 },
-  acceptBtn: { flex: 0.47, height: 60, borderRadius: 16, backgroundColor: COLORS.PRIMARY, justifyContent: 'center', alignItems: 'center' },
-  acceptText: { fontSize: 15, fontWeight: '900', color: '#FFF', letterSpacing: 1 }
+  // Immersive Modal request styles
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.8)', justifyContent: 'flex-end' },
+  radarContainer: { width: '100%', height: '85%', justifyContent: 'flex-end', alignItems: 'center' },
+  radarWave: { position: 'absolute', bottom: height * 0.3, width: width * 1.5, height: width * 1.5, borderRadius: width * 0.75, borderWidth: 2, borderColor: COLORS.PRIMARY, opacity: 0.2 },
+  radarDot: { position: 'absolute', top: 50, left: 100, width: 15, height: 15, borderRadius: 8, backgroundColor: COLORS.PRIMARY, shadowColor: COLORS.PRIMARY, shadowOpacity: 1, shadowRadius: 10, elevation: 20 },
+  
+  modalContent: { backgroundColor: '#FFF', width: '100%', borderTopLeftRadius: 40, borderTopRightRadius: 40, padding: 30, paddingBottom: 50, elevation: 25 },
+  timerContainer: { position: 'absolute', top: -45, alignSelf: 'center', alignItems: 'center' },
+  timerCircle: { width: 90, height: 90, borderRadius: 45, backgroundColor: '#FFF', borderWidth: 5, justifyContent: 'center', alignItems: 'center', elevation: 15, shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 10 },
+  timerText: { fontSize: 32, fontWeight: '900' },
+  pulseBadge: { backgroundColor: '#F44336', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, marginTop: -15, elevation: 16 },
+  pulseText: { color: '#FFF', fontSize: 9, fontWeight: '900', letterSpacing: 1 },
+  
+  modalSubTitle: { fontSize: 11, fontWeight: '900', color: '#AAA', letterSpacing: 2, textAlign: 'center', marginTop: 45 },
+  modalPrice: { fontSize: 48, fontWeight: '900', color: '#000', textAlign: 'center', marginVertical: 10 },
+  
+  statsRow: { flexDirection: 'row', backgroundColor: '#F8F8F8', borderRadius: 20, padding: 20, marginVertical: 25, justifyContent: 'space-around', alignItems: 'center' },
+  statItem: { alignItems: 'center' },
+  statValue: { fontSize: 16, fontWeight: '900', color: '#000', marginTop: 5 },
+  statLabel: { fontSize: 10, fontWeight: '700', color: '#AAA', marginTop: 2 },
+  dividerVertical: { width: 1, height: 30, backgroundColor: '#DDD' },
+
+  locationBox: { flexDirection: 'row', paddingHorizontal: 10, marginBottom: 30 },
+  locationPoint: { width: 20, alignItems: 'center', paddingVertical: 5 },
+  dotStart: { width: 10, height: 10, borderRadius: 5, backgroundColor: COLORS.PRIMARY },
+  lineConnector: { width: 2, flex: 1, backgroundColor: '#EEE', marginVertical: 4 },
+  dotEnd: { width: 10, height: 10, borderRadius: 5, borderWidth: 2, borderColor: '#000', backgroundColor: '#FFF' },
+  locationLabels: { flex: 1, marginLeft: 20 },
+  locLabelMini: { fontSize: 9, fontWeight: '900', color: '#AAA', letterSpacing: 1 },
+  locMainText: { fontSize: 16, fontWeight: '700', color: '#333', marginTop: 4 },
+
+  actions: { flexDirection: 'row', width: '100%', justifyContent: 'space-between' },
+  declineBtn: { flex: 0.35, height: 70, borderRadius: 20, backgroundColor: '#F5F5F5', justifyContent: 'center', alignItems: 'center' },
+  declineText: { fontSize: 14, fontWeight: '900', color: '#999', letterSpacing: 1 },
+  acceptBtn: { flex: 0.6, height: 70, borderRadius: 20, backgroundColor: COLORS.PRIMARY, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', elevation: 10, shadowColor: COLORS.PRIMARY, shadowOpacity: 0.3, shadowRadius: 10 },
+  acceptText: { fontSize: 16, fontWeight: '900', color: '#FFF', letterSpacing: 1 }
 });
 
 export default DriverHomeScreen;

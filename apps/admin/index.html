@@ -11,6 +11,16 @@
         font-family: 'Ionicons';
         src: url('https://cdnjs.cloudflare.com/ajax/libs/ionicons/7.1.0/fonts/ionicons.ttf') format('truetype');
       }
+      
+      @keyframes blink {
+        0% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.3; transform: scale(1.5); }
+        100% { opacity: 1; transform: scale(1); }
+      }
+      .flashing-sos {
+        animation: blink 1s infinite;
+        filter: drop-shadow(0 0 10px red);
+      }
     </style>
   </head>
   <body>

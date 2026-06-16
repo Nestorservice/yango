@@ -19,6 +19,9 @@ interface AuthContextType {
   registerDriver: (name: string, vehicleModel: string, plateNumber: string, vehicleColor: string, vehiclePhotoUrl?: string) => Promise<void>;
   updateOnlineStatus: (isOnline: boolean) => Promise<void>;
   signOut: () => Promise<void>;
+  setUser: React.Dispatch<React.SetStateAction<any>>;
+  setUserData: React.Dispatch<React.SetStateAction<any>>;
+  setDriverData: React.Dispatch<React.SetStateAction<any>>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -312,6 +315,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         registerDriver,
         updateOnlineStatus,
         signOut,
+        setUser,
+        setUserData,
+        setDriverData,
       }}
     >
       {children}

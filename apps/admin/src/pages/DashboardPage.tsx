@@ -16,7 +16,7 @@ const DashboardPage = () => {
   const [recentRides, setRecentRides] = useState<any[]>([]);
   const [drivers, setDrivers] = useState<any[]>([]);
   const [emergencyAlerts, setEmergencyAlerts] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState('overview'); // overview, fleet, pricing, create-driver
+  const [activeTab, setActiveTab] = useState('overview'); // overview, fleet, pricing, create-driver, sos-history
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Create Driver Form State
@@ -53,7 +53,7 @@ const DashboardPage = () => {
       setDrivers(s.docs.map(d => ({ id: d.id, ...d.data() })));
     });
 
-    const unsubscribeEmergencies = onSnapshot(query(collection(db, 'emergency_alerts'), where('status', '==', 'pending')), (s) => {
+    const unsubscribeEmergencies = onSnapshot(collection(db, 'emergency_alerts'), (s) => {
       setEmergencyAlerts(s.docs.map(d => ({ id: d.id, ...d.data() })));
     });
 
@@ -169,6 +169,13 @@ const DashboardPage = () => {
            <Text style={[styles.navText, activeTab === 'pricing' && styles.navTextActive]}>Tarification</Text>
          </TouchableOpacity>
 
+         <TouchableOpacity 
+            style={[styles.navItem, activeTab === 'sos-history' && styles.navItemActive]} 
+            onPress={() => setActiveTab('sos-history')}
+         >
+           <Text style={[styles.navText, activeTab === 'sos-history' && styles.navTextActive]}>Historique SOS</Text>
+         </TouchableOpacity>
+
          <View style={{flex: 1}} />
          
          <View style={styles.miniStat}><Text style={styles.miniLabel}>REVENUS</Text><Text style={styles.miniValue}>{formatPrice(stats.totalRevenue)}</Text></View>
@@ -184,6 +191,7 @@ const DashboardPage = () => {
              {activeTab === 'fleet' && "Gestion de la Flotte"}
              {activeTab === 'create-driver' && "Enregistrement Chauffeur"}
              {activeTab === 'pricing' && "Paramètres de Tarification"}
+             {activeTab === 'sos-history' && "Archives des Urgences"}
            </Text>
            <View style={styles.liveBadge}><View style={styles.dot} /><Text style={styles.liveText}>TEMPS RÉEL</Text></View>
         </View>
@@ -226,6 +234,17 @@ const DashboardPage = () => {
                       </CircleMarker>
                     );
                   })}
+                  {/* SOS Markers with flashing effect */}
+                  {emergencyAlerts.filter(a => a.status === 'pending' && a.location).map(alert => (
+                    <CircleMarker 
+                      key={alert.id} 
+                      center={[alert.location.latitude || alert.location._lat, alert.location.longitude || alert.location._long]} 
+                      radius={15} 
+                      pathOptions={{ fillColor: '#F44336', color: '#F44336', fillOpacity: 0.8, className: 'flashing-sos' }}
+                    >
+                      <Popup>🚨 SOS: {alert.userRole} en danger !</Popup>
+                    </CircleMarker>
+                  ))}
                </MapContainer>
             </View>
 
@@ -425,6 +444,44 @@ const DashboardPage = () => {
             >
               <Text style={styles.savePricingBtnText}>{isEditingPrice ? 'VALIDER LES TARIFS' : 'MODIFIER LES TARIFS'}</Text>
             </TouchableOpacity>
+          </View>
+        )}
+
+        {activeTab === 'sos-history' && (
+          <View style={styles.list}>
+             <View style={styles.tableHeader}>
+               <Text style={[styles.tableHead, {flex: 1.5}]}>DATE</Text>
+               <Text style={styles.tableHead}>UTILISATEUR</Text>
+               <Text style={[styles.tableHead, {flex: 2}]}>MESSAGE</Text>
+               <Text style={styles.tableHead}>STATUT</Text>
+               <Text style={styles.tableHead}>PHOTOS</Text>
+             </View>
+             {emergencyAlerts.sort((a,b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)).map(alert => (
+               <View key={alert.id} style={styles.tableRow}>
+                  <Text style={[styles.tableCell, {flex: 1.5}]}>
+                    {alert.createdAt?.toDate ? alert.createdAt.toDate().toLocaleString() : 'Date inconnue'}
+                  </Text>
+                  <View style={{flex: 1}}>
+                    <Text style={styles.itemMain}>{alert.userRole}</Text>
+                    <Text style={styles.itemSub}>{alert.userId.substring(0,8)}...</Text>
+                  </View>
+                  <Text style={[styles.tableCell, {flex: 2}]}>{alert.message}</Text>
+                  <View style={[styles.statusBadge, {backgroundColor: alert.status === 'resolved' ? '#E8F5E9' : '#FFEBEE'}]}>
+                    <Text style={{color: alert.status === 'resolved' ? '#2E7D32' : '#D32F2F', fontSize: 10, fontWeight: 'bold'}}>
+                      {alert.status.toUpperCase()}
+                    </Text>
+                  </View>
+                  <View style={{flex: 1, flexDirection: 'row', gap: 5}}>
+                    {alert.photoUrls?.length > 0 ? (
+                       alert.photoUrls.map((url: string, i: number) => (
+                         <img key={i} src={url} style={{width: 30, height: 30, borderRadius: 5, objectFit: 'cover'}} />
+                       ))
+                    ) : (
+                       <Text style={{fontSize: 10, color: '#AAA'}}>Aucune</Text>
+                    )}
+                  </View>
+               </View>
+             ))}
           </View>
         )}
       </ScrollView>

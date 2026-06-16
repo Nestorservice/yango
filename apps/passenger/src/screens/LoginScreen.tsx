@@ -8,26 +8,82 @@ import {
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  ScrollView
 } from 'react-native';
 import { useAuth } from '../context/AuthContext';
 import { COLORS } from '../../../../shared/constants';
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
 
 const LoginScreen = ({ navigation }: any) => {
+  const [mode, setMode] = useState<'passenger' | 'driver'>('passenger');
   const [phone, setPhone] = useState('');
-  const { sendSMSCode, loading } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const { sendSMSCode, loading, setUser, setDriverData, setUserData } = useAuth();
+  const [internalLoading, setInternalLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (phone.length < 4) {
-      Alert.alert('Erreur', 'Veuillez entrer un numéro valide');
-      return;
-    }
-    try {
-      const formattedPhone = phone.startsWith('+') ? phone : `+237${phone}`;
-      const confirmation = await sendSMSCode(phone);
-      navigation.navigate('OTP', { confirmation, phone: formattedPhone });
-    } catch (e) {
-      // Error is alerted by context
+    if (mode === 'passenger') {
+      if (phone.length < 4) {
+        Alert.alert('Erreur', 'Veuillez entrer un numéro valide');
+        return;
+      }
+      try {
+        const formattedPhone = phone.startsWith('+') ? phone : `+237${phone}`;
+        const confirmation = await sendSMSCode(phone);
+        navigation.navigate('OTP', { confirmation, phone: formattedPhone });
+      } catch (e) {
+        // Error is alerted by context
+      }
+    } else {
+      // Driver Login with Password
+      if (!email || !password) {
+        Alert.alert('Erreur', 'Veuillez entrer votre email et mot de passe');
+        return;
+      }
+
+      setInternalLoading(true);
+      try {
+        // 1. Rechercher le chauffeur dans Firestore par email
+        const querySnapshot = await firestore()
+          .collection('drivers')
+          .where('email', '==', email.toLowerCase().trim())
+          .get();
+
+        if (querySnapshot.empty) {
+          Alert.alert('Erreur', 'Chauffeur non trouvé avec cet email.');
+          setInternalLoading(false);
+          return;
+        }
+
+        const driverDoc = querySnapshot.docs[0];
+        const driverInfo = driverDoc.data();
+
+        // 2. Vérifier le mot de passe (en clair pour le prototype, à sécuriser en prod)
+        if (driverInfo.password !== password) {
+          Alert.alert('Erreur', 'Mot de passe incorrect.');
+          setInternalLoading(false);
+          return;
+        }
+
+        // 3. Authentification Firebase (Anonyme pour le prototype pour avoir un UID)
+        const userCred = await auth().signInAnonymously();
+        
+        // 4. Mettre à jour le contexte avec les données du chauffeur
+        const fullDriverData = { ...driverInfo, role: 'driver', uid: userCred.user.uid };
+        if (setUser) setUser(userCred.user);
+        if (setDriverData) setDriverData(fullDriverData);
+        if (setUserData) setUserData(fullDriverData);
+
+        Alert.alert('Succès', `Bienvenue ${driverInfo.name}`);
+      } catch (e: any) {
+        console.error(e);
+        Alert.alert('Erreur', 'Une erreur est survenue lors de la connexion. Vérifiez votre connexion internet.');
+      } finally {
+        setInternalLoading(false);
+      }
     }
   };
 
@@ -36,58 +92,124 @@ const LoginScreen = ({ navigation }: any) => {
       style={styles.container} 
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={styles.topSection}>
-        <View style={styles.logoContainer}>
-          <Text style={styles.logoText}>CITY</Text>
-          <Text style={[styles.logoText, { color: COLORS.PRIMARY }]}>GO</Text>
-        </View>
-        <Text style={styles.title}>Votre ville,{"\n"}à votre rythme.</Text>
-      </View>
-
-      <View style={styles.bottomSection}>
-        <Text style={styles.label}>Numéro de téléphone</Text>
-        <View style={styles.inputWrapper}>
-          <View style={styles.countryPicker}>
-            <Text style={styles.flag}>🇨🇲</Text>
-            <Text style={styles.code}>+237</Text>
+      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
+        <View style={styles.topSection}>
+          <View style={styles.logoContainer}>
+            <Text style={styles.logoText}>CITY</Text>
+            <Text style={[styles.logoText, { color: COLORS.PRIMARY }]}>GO</Text>
           </View>
-          <TextInput
-            style={styles.input}
-            placeholder="6XX XXX XXX"
-            placeholderTextColor="#BBB"
-            keyboardType="phone-pad"
-            value={phone}
-            onChangeText={setPhone}
-          />
+          <Text style={styles.title}>Votre ville,{"\n"}à votre rythme.</Text>
         </View>
 
-        <TouchableOpacity
-          style={[styles.button, loading && styles.buttonDisabled]}
-          onPress={handleLogin}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
+        <View style={styles.modeSelector}>
+          <TouchableOpacity 
+            style={[styles.modeBtn, mode === 'passenger' && styles.modeBtnActive]}
+            onPress={() => setMode('passenger')}
+          >
+            <Text style={[styles.modeBtnText, mode === 'passenger' && styles.modeBtnTextActive]}>PASSAGER</Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.modeBtn, mode === 'driver' && styles.modeBtnActive]}
+            onPress={() => setMode('driver')}
+          >
+            <Text style={[styles.modeBtnText, mode === 'driver' && styles.modeBtnTextActive]}>CHAUFFEUR</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.bottomSection}>
+          {mode === 'passenger' ? (
+            <>
+              <Text style={styles.label}>Numéro de téléphone</Text>
+              <View style={styles.inputWrapper}>
+                <View style={styles.countryPicker}>
+                  <Text style={styles.flag}>🇨🇲</Text>
+                  <Text style={styles.code}>+237</Text>
+                </View>
+                <TextInput
+                  style={styles.input}
+                  placeholder="6XX XXX XXX"
+                  placeholderTextColor="#BBB"
+                  keyboardType="phone-pad"
+                  value={phone}
+                  onChangeText={setPhone}
+                />
+              </View>
+            </>
           ) : (
-            <Text style={styles.buttonText}>SE CONNECTER</Text>
-          )}
-        </TouchableOpacity>
+            <>
+              <Text style={styles.label}>Adresse Email</Text>
+              <View style={styles.inputWrapper}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="chauffeur@exemple.com"
+                  placeholderTextColor="#BBB"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  value={email}
+                  onChangeText={setEmail}
+                />
+              </View>
 
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Pas encore de compte ? </Text>
-          <Text style={styles.footerLink}>S'inscrire</Text>
+              <Text style={styles.label}>Mot de passe</Text>
+              <View style={styles.inputWrapper}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="******"
+                  placeholderTextColor="#BBB"
+                  secureTextEntry
+                  value={password}
+                  onChangeText={setPassword}
+                />
+              </View>
+            </>
+          )}
+
+          <TouchableOpacity
+            style={[styles.button, (loading || internalLoading) && styles.buttonDisabled]}
+            onPress={handleLogin}
+            disabled={loading || internalLoading}
+          >
+            {loading || internalLoading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.buttonText}>
+                {mode === 'passenger' ? 'SE CONNECTER' : 'OUVRIR MA SESSION'}
+              </Text>
+            )}
+          </TouchableOpacity>
+
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>
+              {mode === 'passenger' ? "Pas encore de compte ? " : "Problème d'accès ? "}
+            </Text>
+            <Text style={styles.footerLink}>
+              {mode === 'passenger' ? "S'inscrire" : "Contacter l'Admin"}
+            </Text>
+          </View>
         </View>
-      </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  topSection: { flex: 1, justifyContent: 'center', paddingHorizontal: 30 },
+  topSection: { flex: 1, justifyContent: 'center', paddingHorizontal: 30, paddingTop: 50 },
   logoContainer: { flexDirection: 'row', marginBottom: 15 },
   logoText: { fontSize: 48, fontWeight: '900', color: '#000', letterSpacing: -2 },
   title: { fontSize: 28, fontWeight: '700', color: '#333', lineHeight: 36 },
+  modeSelector: { 
+    flexDirection: 'row', 
+    marginHorizontal: 30, 
+    marginBottom: 20,
+    backgroundColor: '#F0F0F0',
+    borderRadius: 12,
+    padding: 4
+  },
+  modeBtn: { flex: 1, paddingVertical: 12, alignItems: 'center', borderRadius: 10 },
+  modeBtnActive: { backgroundColor: '#FFF', elevation: 2, shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4 },
+  modeBtnText: { fontSize: 13, fontWeight: 'bold', color: '#999' },
+  modeBtnTextActive: { color: COLORS.PRIMARY },
   bottomSection: { 
     padding: 30, 
     paddingBottom: 50 
@@ -100,7 +222,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingHorizontal: 20,
     height: 64,
-    marginBottom: 30
+    marginBottom: 20
   },
   countryPicker: { flexDirection: 'row', alignItems: 'center', marginRight: 15, borderRightWidth: 1, borderRightColor: '#EEE', paddingRight: 15 },
   flag: { fontSize: 20, marginRight: 8 },
@@ -116,7 +238,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
     shadowRadius: 12,
-    elevation: 8
+    elevation: 8,
+    marginTop: 10
   },
   buttonDisabled: { opacity: 0.7 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: 'bold', letterSpacing: 1 },
