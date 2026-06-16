@@ -1,6 +1,6 @@
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { getFirestore, initializeFirestore } from 'firebase/firestore';
 import { getStorage } from 'firebase/storage';
 import { getFunctions } from 'firebase/functions';
 
@@ -25,31 +25,16 @@ const firebaseConfig = {
   appId: getEnv('FIREBASE_APP_ID'),
 };
 
-let app: FirebaseApp | undefined;
-let db: any = null;
-let auth: any = null;
-let storage: any = null;
-let functions: any = null;
-
-const isWeb = typeof globalThis !== 'undefined' && 'window' in globalThis;
-
-if (isWeb) {
-  // On ne tente l'initialisation QUE si la clé API est présente
-  if (firebaseConfig.apiKey && firebaseConfig.apiKey !== '') {
-    try {
-      if (getApps().length === 0) {
-        app = initializeApp(firebaseConfig);
-      } else {
-        app = getApps()[0];
-      }
-      db = getFirestore(app!);
-      auth = getAuth(app!);
-      storage = getStorage(app!);
-      functions = getFunctions(app!, 'us-central1');
-    } catch (e) {
-      console.error("Firebase Initialization Error:", e);
-    }
-  }
+let app: FirebaseApp;
+if (getApps().length === 0) {
+  app = initializeApp(firebaseConfig);
+} else {
+  app = getApps()[0];
 }
 
-export { app, db, auth, storage, functions, firebaseConfig };
+export const db = getFirestore(app);
+export const auth = getAuth(app);
+export const storage = getStorage(app);
+export const functions = getFunctions(app, 'us-central1');
+
+export { app, firebaseConfig };

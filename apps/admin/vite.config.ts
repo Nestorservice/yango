@@ -4,8 +4,12 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
-  envDir: '../../',
+  envDir: '.',
+  optimizeDeps: {
+    exclude: ['firebase', 'firebase/app', 'firebase/auth', 'firebase/firestore', 'firebase/storage', 'firebase/functions']
+  },
   resolve: {
+    dedupe: ['react', 'react-dom', 'firebase', '@firebase/app', '@firebase/firestore'],
     alias: {
       'react-native': 'react-native-web',
       // SOLUTION RADICALE : On remplace la lib d'icônes par notre mock pour le web
