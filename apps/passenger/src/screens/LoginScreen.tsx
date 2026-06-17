@@ -21,74 +21,70 @@ const LoginScreen = ({ navigation }: any) => {
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { sendSMSCode, loading, setUser, setDriverData, setUserData } = useAuth();
+  const { loading, setUser, setDriverData, setUserData } = useAuth();
   const [internalLoading, setInternalLoading] = useState(false);
-const handleLogin = async () => {
-  if (mode === 'passenger') {
-    if (phone.length < 4) {
-      Alert.alert('Erreur', 'Veuillez entrer un numéro valide');
-      return;
-    }
 
-    setInternalLoading(true);
-    try {
-      // Nettoyage et formatage du numéro
-      let cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
-      if (cleanPhone.startsWith('0')) cleanPhone = cleanPhone.substring(1);
-      const formattedPhone = cleanPhone.startsWith('+') ? cleanPhone : `+237${cleanPhone}`;
-
-      console.log("Connexion simplifiée pour le passager :", formattedPhone);
-
-      // 1. Authentification Firebase (Anonyme pour éviter le SMS)
-      const userCred = await auth().signInAnonymously();
-      const uid = userCred.user.uid;
-
-      // 2. Vérifier si l'utilisateur existe déjà dans Firestore (par son téléphone)
-      const userQuery = await firestore()
-        .collection('users')
-        .where('phone', '==', formattedPhone)
-        .get();
-
-      let profileData;
-
-      if (!userQuery.empty) {
-        // Utilisateur existant
-        profileData = userQuery.docs[0].data();
-        // On met à jour l'UID Firestore pour qu'il corresponde à la session actuelle si besoin
-        // Note: Dans un vrai système, on lierait les comptes, ici on simplifie
-        await firestore().collection('users').doc(uid).set({
-          ...profileData,
-          uid: uid,
-          lastLogin: firestore.FieldValue.serverTimestamp()
-        }, { merge: true });
-      } else {
-        // Nouvel utilisateur
-        profileData = {
-          uid: uid,
-          phone: formattedPhone,
-          role: 'passenger',
-          createdAt: firestore.FieldValue.serverTimestamp(),
-          name: '' // Sera complété dans l'onboarding
-        };
-        await firestore().collection('users').doc(uid).set(profileData);
+  const handleLogin = async () => {
+    if (mode === 'passenger') {
+      if (phone.length < 4) {
+        Alert.alert('Erreur', 'Veuillez entrer un numéro valide');
+        return;
       }
 
-      // 3. Mettre à jour le contexte global
-      if (setUser) setUser(userCred.user);
-      if (setUserData) setUserData(profileData);
+      setInternalLoading(true);
+      try {
+        // Nettoyage et formatage du numéro
+        let cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
+        if (cleanPhone.startsWith('0')) cleanPhone = cleanPhone.substring(1);
+        const formattedPhone = cleanPhone.startsWith('+') ? cleanPhone : `+237${cleanPhone}`;
 
-      // Pas besoin de naviguer vers 'OTP', le changement d'état d'auth (user)
-      // dans App.tsx redirigera automatiquement vers Home ou Onboarding
+        console.log("Connexion simplifiée pour le passager :", formattedPhone);
 
-    } catch (e: any) {
-      console.error("Simplied Login Error:", e);
-      Alert.alert('Erreur', 'Impossible de se connecter. Vérifiez votre connexion.');
-    } finally {
-      setInternalLoading(false);
-    }
-  } else {
-    // Driver Login with Password (inchangé)
-...
+        // 1. Authentification Firebase (Anonyme pour éviter le SMS)
+        const userCred = await auth().signInAnonymously();
+        const uid = userCred.user.uid;
+
+        // 2. Vérifier si l'utilisateur existe déjà dans Firestore (par son téléphone)
+        const userQuery = await firestore()
+          .collection('users')
+          .where('phone', '==', formattedPhone)
+          .get();
+
+        let profileData;
+
+        if (!userQuery.empty) {
+          // Utilisateur existant
+          profileData = userQuery.docs[0].data();
+          // On met à jour l'UID Firestore pour qu'il corresponde à la session actuelle si besoin
+          await firestore().collection('users').doc(uid).set({
+            ...profileData,
+            uid: uid,
+            lastLogin: firestore.FieldValue.serverTimestamp()
+          }, { merge: true });
+        } else {
+          // Nouvel utilisateur
+          profileData = {
+            uid: uid,
+            phone: formattedPhone,
+            role: 'passenger',
+            createdAt: firestore.FieldValue.serverTimestamp(),
+            name: '' // Sera complété dans l'onboarding
+          };
+          await firestore().collection('users').doc(uid).set(profileData);
+        }
+
+        // 3. Mettre à jour le contexte global
+        if (setUser) setUser(userCred.user);
+        if (setUserData) setUserData(profileData);
+
+      } catch (e: any) {
+        console.error("Simplified Login Error:", e);
+        Alert.alert('Erreur', 'Impossible de se connecter. Vérifiez votre connexion.');
+      } finally {
+        setInternalLoading(false);
+      }
+    } else {
+      // Driver Login with Password
       if (!email || !password) {
         Alert.alert('Erreur', 'Veuillez entrer votre email et mot de passe');
         return;
@@ -111,17 +107,17 @@ const handleLogin = async () => {
         const driverDoc = querySnapshot.docs[0];
         const driverInfo = driverDoc.data();
 
-        // 2. Vérifier le mot de passe (en clair pour le prototype, à sécuriser en prod)
+        // 2. Vérifier le mot de passe
         if (driverInfo.password !== password) {
           Alert.alert('Erreur', 'Mot de passe incorrect.');
           setInternalLoading(false);
           return;
         }
 
-        // 3. Authentification Firebase (Anonyme pour le prototype pour avoir un UID)
+        // 3. Authentification Firebase
         const userCred = await auth().signInAnonymously();
         
-        // 4. Mettre à jour le contexte avec les données du chauffeur
+        // 4. Mettre à jour le contexte
         const fullDriverData = { ...driverInfo, role: 'driver', uid: userCred.user.uid };
         if (setUser) setUser(userCred.user);
         if (setDriverData) setDriverData(fullDriverData);
